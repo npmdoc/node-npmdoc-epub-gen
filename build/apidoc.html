@@ -1,0 +1,182 @@
+<div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a
+
+        href="https://github.com/cyrilis/epub-gen"
+
+    >epub-gen (v0.0.17)</a>
+</h1>
+<h4>A library to generate EPUB from HTML</h4>
+<div class="apidocSectionDiv"><a
+    href="#apidoc.tableOfContents"
+    id="apidoc.tableOfContents"
+><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.epub-gen">module epub-gen</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.epub-gen.epub-gen">
+            function <span class="apidocSignatureSpan"></span>epub-gen
+            <span class="apidocSignatureSpan">(options, output)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.epub-gen" id="apidoc.module.epub-gen">module epub-gen</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.epub-gen.epub-gen" id="apidoc.element.epub-gen.epub-gen">
+        function <span class="apidocSignatureSpan"></span>epub-gen
+        <span class="apidocSignatureSpan">(options, output)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function EPub(options, output) {
+  var self;
+  this.options = options;
+  self = this;
+  this.defer = new Q.defer();
+  if (output) {
+    this.options.output = output;
+  }
+  if (!this.options.output) {
+    console.error(new Error(&#x22;No Output Path&#x22;));
+    this.defer.reject(new Error(&#x22;No output path&#x22;));
+    return;
+  }
+  if (!options.title || !options.content) {
+    console.error(new Error(&#x22;Title and content are both required&#x22;));
+    this.defer.reject(new Error(&#x22;Title and content are both required&#x22;));
+    return;
+  }
+  this.options = _.extend({
+    description: options.title,
+    publisher: &#x22;anonymous&#x22;,
+    author: [&#x22;anonymous&#x22;],
+    tocTitle: &#x22;Table Of Contents&#x22;,
+    appendChapterTitles: true,
+    date: new Date().toISOString(),
+    lang: &#x22;en&#x22;,
+    fonts: [],
+    customOpfTemplatePath: null,
+    customNcxTocTemplatePath: null,
+    customHtmlTocTemplatePath: null,
+    version: 3
+  }, options);
+  if (this.options.version === 2) {
+    this.options.docHeader = &#x22;&#x3c;?xml version=\&#x22;1.0\&#x22; encoding=\&#x22;UTF-8\&#x22;?&#x3e;\n&#x3c;!DOCTYPE html PUBLIC \&#x22;-//W3C//DTD XHTML 1.1//EN\&#x22; \&#x22;
+http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\&#x22;&#x3e;\n&#x3c;html xmlns=\&#x22;http://www.w3.org/1999/xhtml\&#x22; lang=\&#x22;&#x22; + self.options.lang + &#x22;\&#x22;&#x3e;&#x22;;
+  } else {
+    this.options.docHeader = &#x22;&#x3c;?xml version=\&#x22;1.0\&#x22; encoding=\&#x22;UTF-8\&#x22;?&#x3e;\n&#x3c;!DOCTYPE html&#x3e;\n&#x3c;html xmlns=\&#x22;http://www.w3.org/1999/
+xhtml\&#x22; lang=\&#x22;&#x22; + self.options.lang + &#x22;\&#x22;&#x3e;&#x22;;
+  }
+  if (_.isString(this.options.author)) {
+    this.options.author = [this.options.author];
+  }
+  if (_.isEmpty(this.options.author)) {
+    this.options.author = [&#x22;anonymous&#x22;];
+  }
+  if (!this.options.tempDir) {
+    this.options.tempDir = path.resolve(__dirname, &#x22;../tempDir/&#x22;);
+  }
+  this.id = uuid();
+  this.uuid = path.resolve(this.options.tempDir, this.id);
+  this.options.uuid = this.uuid;
+  this.options.id = this.id;
+  this.options.images = [];
+  this.options.content = _.map(this.options.content, function(content, index) {
+    var $, allowedAttributes, allowedXhtml11Tags, titleSlug;
+    if (!content.filename) {
+      titleSlug = uslug(removeDiacritics(content.title || &#x22;no title&#x22;));
+      content.href = index + &#x22;_&#x22; + titleSlug + &#x22;.xhtml&#x22;;
+      content.filePath = path.resolve(self.uuid, &#x22;./OEBPS/&#x22; + index + &#x22;_&#x22; + titleSlug + &#x22;.xhtml&#x22;);
+    } else {
+      content.href = content.filename.match(/\.xhtml$/) ? content.filename : content.filename + &#x22;.xhtml&#x22;;
+      console.log(content.href);
+      if (content.filename.match(/\.xhtml$/)) {
+        content.filePath = path.resolve(self.uuid, &#x22;./OEBPS/&#x22; + content.filename);
+      } else {
+        content.filePath = path.resolve(self.uuid, &#x22;./OEBPS/&#x22; + content.filename + &#x22;.xhtml&#x22;);
+      }
+    }
+    content.id = &#x22;item_&#x22; + index;
+    content.dir = path.dirname(content.filePath);
+    content.excludeFromToc || (content.excludeFromToc = false);
+    content.beforeToc || (content.beforeToc = false);
+    content.author = content.author &#x26;&#x26; _.isString(content.author) ? [content.author] : !content.author || !_.isArray(content.author
+) ? [] : content.author;
+    allowedAttributes = [&#x22;content&#x22;, &#x22;alt&#x22;, &#x22;id&#x22;, &#x22;title&#x22;, &#x22;src&#x22;, &#x22;href&#x22;, &#x22;about&#x22;, &#x22;accesskey&#x22;, &#x22;aria-activedescendant&#x22;, &#x22;aria-atomic
+&#x22;, &#x22;aria-autocomplete&#x22;, &#x22;aria-busy&#x22;, &#x22;aria-checked&#x22;, &#x22;aria-controls&#x22;, &#x22;aria-describedat&#x22;, &#x22;aria-describedby&#x22;, &#x22;aria-disabled&#x22;, &#x22;
+aria-dropeffect&#x22;, &#x22;aria-expanded&#x22;, &#x22;aria-flowto&#x22;, &#x22;aria-grabbed&#x22;, &#x22;aria-haspopup&#x22;, &#x22;aria-hidden&#x22;, &#x22;aria-invalid&#x22;, &#x22;aria-label&#x22;, &#x22;
+aria-labelledby&#x22;, &#x22;aria-level&#x22;, &#x22;aria-live&#x22;, &#x22;aria-multiline&#x22;, &#x22;aria-multiselectable&#x22;, &#x22;aria-orientation&#x22;, &#x22;aria-owns&#x22;, &#x22;aria-posinset
+&#x22;, &#x22;aria-pressed&#x22;, &#x22;aria-readonly&#x22;, &#x22;aria-relevant&#x22;, &#x22;aria-required&#x22;, &#x22;aria-selected&#x22;, &#x22;aria-setsize&#x22;, &#x22;aria-sort&#x22;, &#x22;aria-valuemax
+&#x22;, &#x22;aria-valuemin&#x22;, &#x22;aria-valuenow&#x22;, &#x22;aria-valuetext&#x22;, &#x22;class&#x22;, &#x22;content&#x22;, &#x22;contenteditable&#x22;, &#x22;contextmenu&#x22;, &#x22;datatype&#x22;, &#x22;dir&#x22;, &#x22;
+draggable&#x22;, &#x22;dropzone&#x22;, &#x22;hidden&#x22;, &#x22;hreflang&#x22;, &#x22;id&#x22;, &#x22;inlist&#x22;, &#x22;itemid&#x22;, &#x22;itemref&#x22;, &#x22;itemscope&#x22;, &#x22;itemtype&#x22;, &#x22;lang&#x22;, &#x22;media&#x22;, &#x22;ns1
+:type&#x22;, &#x22;ns2:alphabet&#x22;, &#x22;ns2:ph&#x22;, &#x22;onabort&#x22;, &#x22;onblur&#x22;, &#x22;oncanplay&#x22;, &#x22;oncanplaythrough&#x22;, &#x22;onchange&#x22;, &#x22;onclick&#x22;, &#x22;oncontextmenu&#x22;, &#x22;
+ondblclick&#x22;, &#x22;ondrag&#x22;, &#x22;ondragend&#x22;, &#x22;ondragent ...</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
